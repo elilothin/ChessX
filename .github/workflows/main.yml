@@ -19,14 +19,11 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    # gradlew n'est pas dans le dépôt : on installe Gradle directement
-    # (même version que gradle/wrapper/gradle-wrapper.properties)
     - name: Installer Gradle
       uses: gradle/actions/setup-gradle@v5
       with:
         gradle-version: '9.3.1'
 
-    # debug.keystore est dans le .gitignore, mais build.gradle.kts l'exige
     - name: Générer la clé de debug
       run: |
         keytool -genkeypair -v \
@@ -35,6 +32,40 @@ jobs:
           -alias androiddebugkey \
           -keyalg RSA -keysize 2048 -validity 10000 \
           -dname "CN=Android Debug,O=Android,C=US"
+
+    - name: Créer un google-services.json factice si absent
+      run: |
+        if [ ! -f app/google-services.json ]; then
+          cat > app/google-services.json <<'EOF'
+        {
+          "project_info": {
+            "project_number": "000000000000",
+            "project_id": "chessx-placeholder",
+            "storage_bucket": "chessx-placeholder.appspot.com"
+          },
+          "client": [
+            {
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                "android_client_info": { "package_name": "com.aistudio.chessx.qwmzkv" }
+              },
+              "oauth_client": [
+                { "client_id": "000000000000-placeholder.apps.googleusercontent.com", "client_type": 3 }
+              ],
+              "api_key": [ { "current_key": "placeholder" } ],
+              "services": {
+                "appinvite_service": {
+                  "other_platform_oauth_client": [
+                    { "client_id": "000000000000-placeholder.apps.googleusercontent.com", "client_type": 3 }
+                  ]
+                }
+              }
+            }
+          ],
+          "configuration_version": "1"
+        }
+        EOF
+        fi
 
     - name: Compiler l'APK (Debug)
       run: gradle assembleDebug --stacktrace
