@@ -1,0 +1,6 @@
+{
+  "name": "Chess X",
+  "description": "Jeu d'échecs thématique de style manga à travers cinq univers : Western, Grèce antique, Japon féodal, Basket-ball et Futuriste, avec mode campagne et multijoueur en ligne.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
