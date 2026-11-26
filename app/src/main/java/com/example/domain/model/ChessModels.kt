@@ -7,13 +7,13 @@ enum class PieceColor {
     fun fenChar(): Char = if (this == WHITE) 'w' else 'b'
 }
 
-enum class PieceType(val symbol: Char, val value: Int, val frenchName: String) {
-    PAWN('P', 100, "Pion"),
-    KNIGHT('N', 320, "Cavalier"),
-    BISHOP('B', 330, "Fou"),
-    ROOK('R', 500, "Tour"),
-    QUEEN('Q', 900, "Reine"),
-    KING('K', 20000, "Roi");
+enum class PieceType(val symbol: Char, val value: Int, val frenchName: String, val englishName: String) {
+    PAWN('P', 100, "Pion", "Pawn"),
+    KNIGHT('N', 320, "Cavalier", "Knight"),
+    BISHOP('B', 330, "Fou", "Bishop"),
+    ROOK('R', 500, "Tour", "Rook"),
+    QUEEN('Q', 900, "Dame", "Queen"),
+    KING('K', 20000, "Roi", "King");
 
     companion object {
         fun fromChar(c: Char): PieceType? = when (c.uppercaseChar()) {
@@ -77,7 +77,8 @@ enum class GameOutcome {
     CHECKMATE_BLACK_WINS,
     STALEMATE,
     DRAW_INSUFFICIENT_MATERIAL,
-    DRAW_FIFTY_MOVE
+    DRAW_FIFTY_MOVE,
+    DRAW_REPETITION
 }
 
 data class CastlingRights(
@@ -106,30 +107,3 @@ data class BoardState(
 ) {
     fun pieceAt(sq: Square): ChessPiece? = if (sq.isValid()) grid[sq.row][sq.col] else null
 }
-
-data class CaptureEvent(
-    val id: Long,
-    val attackerUniverse: UniverseId,
-    val attackerType: PieceType,
-    val attackerColor: PieceColor,
-    val victimType: PieceType, // Always rendered as classic ("lambda") piece per PDF rule
-    val victimColor: PieceColor
-)
-
-enum class EndgameType {
-    CHECKMATE,
-    RESIGN,
-    TIMEOUT,
-    STALEMATE_OR_DRAW
-}
-
-data class EndgameEvent(
-    val type: EndgameType,
-    val winnerColor: PieceColor?, // null for draw
-    val winnerUniverse: UniverseId,
-    val title: String,
-    val description: String,
-    val eloDelta: Int,
-    val newElo: Int,
-    val unlockedUniverse: UniverseId? = null
-)

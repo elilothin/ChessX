@@ -1,9 +1,14 @@
 package com.example.domain.chess
 
+import com.example.domain.model.AnalyzedPly
 import com.example.domain.model.BoardState
 import com.example.domain.model.ChessMove
+import com.example.domain.model.GameAnalysisResult
+import com.example.domain.model.MoveQuality
 import com.example.domain.model.PieceColor
 import com.example.domain.model.PieceType
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 object ChessAi {
@@ -41,6 +46,19 @@ object ChessAi {
         intArrayOf(-20, -10, -10, -10, -10, -10, -10, -20)
     )
 
+    fun chooseMoveForElo(board: BoardState, elo: Int): ChessMove? {
+        val (depth, randomness) = when {
+            elo <= 600 -> 1 to 0.55
+            elo <= 900 -> 1 to 0.30
+            elo <= 1200 -> 2 to 0.22
+            elo <= 1500 -> 2 to 0.10
+            elo <= 1850 -> 2 to 0.0
+            elo <= 2200 -> 3 to 0.04
+            else -> 3 to 0.0
+        }
+        return chooseMove(board, depth, randomness)
+    }
+
     fun chooseMove(board: BoardState, depth: Int, randomness: Double): ChessMove? {
         val legal = ChessEngine.legalMoves(board)
         if (legal.isEmpty()) return null
@@ -50,7 +68,19 @@ object ChessAi {
             val topSlice = ordered.take(minOf(4, ordered.size))
             return topSlice.random()
         }
+        return bestMoveWithEval(board, depth).first ?: ordered.first()
+    }
 
+    fun bestMoveWithEval(board: BoardState, depth: Int = 2): Pair<ChessMove?, Int> {
+        val legal = ChessEngine.legalMoves(board)
+        if (legal.isEmpty()) {
+            val score = if (ChessEngine.isInCheck(board, board.turn)) {
+                if (board.turn == PieceColor.WHITE) -100_000 else 100_000
+            } else 0
+            return null to score
+        }
+
+        val ordered = orderMoves(legal)
         val maximizing = board.turn == PieceColor.WHITE
         var bestScore = if (maximizing) Int.MIN_VALUE else Int.MAX_VALUE
         val bestMoves = mutableListOf<ChessMove>()
@@ -76,7 +106,84 @@ object ChessAi {
                 }
             }
         }
-        return bestMoves.randomOrNull() ?: ordered.first()
+        return (bestMoves.randomOrNull() ?: ordered.first()) to bestScore
+    }
+
+    fun evaluatePositionCp(board: BoardState, depth: Int = 2): Int {
+        return bestMoveWithEval(board, depth).second
+    }
+
+    fun analyzeGame(parsed: ParsedPgnGame, depth: Int = 2): GameAnalysisResult {
+        val analyzedPlies = mutableListOf<AnalyzedPly>()
+        var whiteLossTotal = 0
+        var whiteMoves = 0
+        var blackLossTotal = 0
+        var blackMoves = 0
+
+        for (pm in parsed.moves) {
+            val isWhiteTurn = pm.boardBefore.turn == PieceColor.WHITE
+            val (bestMove, bestEval) = bestMoveWithEval(pm.boardBefore, depth)
+            val actualEval = evaluatePositionCp(pm.boardAfter, (depth - 1).coerceAtLeast(1))
+
+            // Centipawn loss from the mover's perspective
+            val rawLoss = if (isWhiteTurn) {
+                (bestEval - actualEval).coerceAtLeast(0)
+            } else {
+                (actualEval - bestEval).coerceAtLeast(0)
+            }
+            val cappedLoss = rawLoss.coerceAtMost(1000)
+
+            val isBest = bestMove != null && bestMove.toUci() == pm.move.toUci()
+            val isSacrificeGain = pm.move.capturedPiece == null &&
+                pm.boardBefore.pieceAt(pm.move.from)?.type in listOf(PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT) &&
+                isBest && abs(actualEval) > 250
+
+            val quality = when {
+                isSacrificeGain -> MoveQuality.BRILLIANT
+                isBest || cappedLoss <= 15 -> MoveQuality.BEST
+                cappedLoss <= 45 -> MoveQuality.GOOD
+                cappedLoss <= 110 -> MoveQuality.INACCURACY
+                cappedLoss <= 250 -> MoveQuality.MISTAKE
+                else -> MoveQuality.BLUNDER
+            }
+
+            if (isWhiteTurn) {
+                whiteLossTotal += cappedLoss
+                whiteMoves++
+            } else {
+                blackLossTotal += cappedLoss
+                blackMoves++
+            }
+
+            val bestSan = bestMove?.let { ChessEngine.toStandardSan(pm.boardBefore, it) }
+            analyzedPlies.add(
+                AnalyzedPly(
+                    plyIndex = pm.plyIndex,
+                    san = pm.san,
+                    uci = pm.move.toUci(),
+                    fenBefore = ChessEngine.toFen(pm.boardBefore),
+                    fenAfter = ChessEngine.toFen(pm.boardAfter),
+                    evalCpAfter = actualEval.coerceIn(-1500, 1500),
+                    bestMoveUci = bestMove?.toUci(),
+                    bestMoveSan = bestSan,
+                    quality = quality,
+                    cpLoss = cappedLoss
+                )
+            )
+        }
+
+        val wAcc = if (whiteMoves == 0) 100 else (100 - (whiteLossTotal.toDouble() / whiteMoves) * 0.25).roundToInt().coerceIn(20, 100)
+        val bAcc = if (blackMoves == 0) 100 else (100 - (blackLossTotal.toDouble() / blackMoves) * 0.25).roundToInt().coerceIn(20, 100)
+
+        return GameAnalysisResult(
+            whitePlayer = parsed.headers["White"] ?: "Blancs",
+            blackPlayer = parsed.headers["Black"] ?: "Noirs",
+            event = parsed.headers["Event"] ?: "Partie importée",
+            result = parsed.result,
+            plies = analyzedPlies,
+            whiteAccuracy = wAcc,
+            blackAccuracy = bAcc
+        )
     }
 
     private fun minimax(board: BoardState, depth: Int, alphaInit: Int, betaInit: Int, maximizing: Boolean): Int {

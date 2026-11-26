@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Chess X"
+rootProject.name = "Échecs Coach"
 
 include(":app")

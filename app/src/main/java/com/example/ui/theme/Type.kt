@@ -8,16 +8,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.R
 
-val CinzelFontFamily = FontFamily(
-    Font(R.font.cinzel, FontWeight.Normal),
-    Font(R.font.cinzel, FontWeight.Bold)
+val PoppinsFontFamily = FontFamily(
+    Font(R.font.poppins, FontWeight.Normal),
+    Font(R.font.poppins, FontWeight.SemiBold),
+    Font(R.font.poppins, FontWeight.Bold)
 )
 
-val JakartaFontFamily = FontFamily(
-    Font(R.font.plus_jakarta_sans, FontWeight.Normal),
-    Font(R.font.plus_jakarta_sans, FontWeight.Medium),
-    Font(R.font.plus_jakarta_sans, FontWeight.SemiBold),
-    Font(R.font.plus_jakarta_sans, FontWeight.Bold)
+val InterFontFamily = FontFamily(
+    Font(R.font.inter, FontWeight.Normal),
+    Font(R.font.inter, FontWeight.Medium),
+    Font(R.font.inter, FontWeight.SemiBold),
+    Font(R.font.inter, FontWeight.Bold)
 )
 
 val JetBrainsMonoFontFamily = FontFamily(
@@ -25,56 +26,68 @@ val JetBrainsMonoFontFamily = FontFamily(
     Font(R.font.jetbrains_mono, FontWeight.Bold)
 )
 
-val ChessXTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = CinzelFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 44.sp,
-        letterSpacing = 2.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = CinzelFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp,
-        letterSpacing = 1.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = CinzelFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 20.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.5.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = JakartaFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = JakartaFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        lineHeight = 22.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = JakartaFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        lineHeight = 19.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = JakartaFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = JetBrainsMonoFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp
+fun buildAppTypography(scale: Float = 1.0f): Typography {
+    val s = scale.coerceIn(0.9f, 1.35f)
+    return Typography(
+        headlineLarge = TextStyle(
+            fontFamily = PoppinsFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = (28 * s).sp,
+            lineHeight = (34 * s).sp
+        ),
+        headlineMedium = TextStyle(
+            fontFamily = PoppinsFontFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = (22 * s).sp,
+            lineHeight = (28 * s).sp
+        ),
+        titleLarge = TextStyle(
+            fontFamily = PoppinsFontFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = (18 * s).sp,
+            lineHeight = (24 * s).sp
+        ),
+        titleMedium = TextStyle(
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = (16 * s).sp,
+            lineHeight = (22 * s).sp
+        ),
+        bodyLarge = TextStyle(
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = (15 * s).sp,
+            lineHeight = (22 * s).sp
+        ),
+        bodyMedium = TextStyle(
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = (14 * s).sp,
+            lineHeight = (20 * s).sp
+        ),
+        bodySmall = TextStyle(
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = (12 * s).sp,
+            lineHeight = (17 * s).sp
+        ),
+        labelLarge = TextStyle(
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = (14 * s).sp,
+            lineHeight = (20 * s).sp
+        ),
+        labelMedium = TextStyle(
+            fontFamily = InterFontFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = (12 * s).sp,
+            lineHeight = (16 * s).sp
+        ),
+        labelSmall = TextStyle(
+            fontFamily = JetBrainsMonoFontFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = (11 * s).sp,
+            lineHeight = (15 * s).sp
+        )
     )
-)
+}
